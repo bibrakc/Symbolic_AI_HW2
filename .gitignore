@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Test scripts and scratchpads
-main.py
+
 
 # C extensions
 *.so
