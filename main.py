@@ -96,7 +96,7 @@ def customDistance(A, B):
 
 
 def customDistanceWeights(A, B):
-    w = [0.7, 0.2, 0.8, 1, 0.7]
+    w = [0.9, 0.1, 0.4, 2, 0.7]
     distric = 0
     address = 0
     source = 0
@@ -124,12 +124,18 @@ my_KRegressors = [('k_neighbors_1', KNeighborsRegressor(n_neighbors=1, metric=cu
                   ('k_neighbors_1_Weighted', KNeighborsRegressor(n_neighbors=1, metric=customDistanceWeights)),
                   ('k_neighbors_2_Weighted', KNeighborsRegressor(n_neighbors=2, metric=customDistanceWeights))]
 
-errors = [0, 0, 0, 0]
+error_average = {'k_neighbors_1': 0, 'k_neighbors_2': 0, 'k_neighbors_1_Weighted': 0, 'k_neighbors_2_Weighted': 0}
 for name, regressor in my_KRegressors:
     for i in range(num_apartments):
-        print("performing regresion for "+ name + " as test case leaving out apartment " + str(i))
+        #print("performing regresion for "+ name + " as test case leaving out apartment " + str(i))
         regressor.fit(transformed_appartments[:i]+transformed_appartments[i+1:], rent[:i]+rent[i+1:])
         predict = regressor.predict([transformed_appartments[i]])
         error = np.fabs(predict - rent[i])
         error_percent = (error/rent[i])*100
-        print(name + " predicts: " + str(predict) + " actual: "+ str(rent[i]) + " error: " + str(error) + " error%: "+ str(error_percent))
+        error_average[name] += error_percent
+        #print(name + " predicts: " + str(predict) + " actual: "+ str(rent[i]) + " error: " + str(error) + " error%: "+ str(error_percent))
+    error_average[name] = error_average[name]/(num_apartments-1)
+    #print("Average Error for "+ name + ": " + str(error_average[name]))
+
+print(error_average)
+#print("Average Error for "+ name + ": " + str(error_average[name]))
