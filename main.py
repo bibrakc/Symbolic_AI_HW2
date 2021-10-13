@@ -3,16 +3,11 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
 import csv
 import numpy as np
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+
     apartments = []
     rooms = []
     rent = []
@@ -34,9 +29,11 @@ if __name__ == '__main__':
             apartments += [new_row]
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
-print(apartments)
-print(rooms)
-print(rent)
+#print(apartments)
+print("number of apartments = "+ str(len(apartments)))
+num_apartments = len(apartments)
+#print(rooms)
+#print(rent)
 
 all_distric = []
 all_address = []
@@ -59,9 +56,9 @@ numeric_address = le.transform(all_address)
 le.fit(all_source)
 numeric_source = le.transform(all_source)
 
-print(numeric_district)
-print(numeric_address)
-print(numeric_source)
+#print(numeric_district)
+#print(numeric_address)
+#print(numeric_source)
 
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
@@ -77,10 +74,10 @@ transformed_appartments = []
 for i in range(len(numeric_district)):
     transformed_appartments += [[numeric_district[i], numeric_address[i], numeric_source[i], scaled_rooms[i][0], scaled_rooms[i][1]]]
 
-print("Final Transformation !!!")
-print(transformed_appartments)
-print("Final Transformation !!! Leaving index 8 out")
-print(transformed_appartments[:8]+transformed_appartments[9:])
+#print("Final Transformation !!!")
+#print(transformed_appartments)
+#print("Final Transformation !!! Leaving index 0 out")
+#print(transformed_appartments[:0]+transformed_appartments[1:])
 
 
 def customDistance(A, B):
@@ -95,14 +92,44 @@ def customDistance(A, B):
     if (A[2] != B[2]):
         source = 1
 
-    return np.sum( np.sqrt( distric+address+source + (A[3] - B[3])**2 + (A[4] - B[4])**2 )  )
+    return np.sum( np.sqrt( distric+address+source + (A[3] - B[3])**2 + (A[4] - B[4])**2))
+
+
+def customDistanceWeights(A, B):
+    w = [0.7, 0.2, 0.8, 1, 0.7]
+    distric = 0
+    address = 0
+    source = 0
+
+    if(A[0] != B[0]):
+        distric = 1
+    if (A[1] != B[1]):
+        address = 1
+    if (A[2] != B[2]):
+        source = 1
+
+    return np.sum( np.sqrt( (w[0]*distric) + (w[1]*address) + (w[2]*source)
+                    + (w[3]*(A[3] - B[3])**2) + (w[4]*(A[4] - B[4])**2)))
 
 
 #print(customDistance(transformed_appartments[0], transformed_appartments[1]))
 
 from sklearn.neighbors import KNeighborsRegressor
-neigh = KNeighborsRegressor(n_neighbors=1, metric=customDistance)
-neigh.fit(transformed_appartments[:8]+transformed_appartments[9:], rent[:8]+rent[9:])
+#neigh = KNeighborsRegressor(n_neighbors=2, metric=customDistanceWeights)
+#neigh.fit(transformed_appartments[:8]+transformed_appartments[9:], rent[:8]+rent[9:])
 
 
-print(neigh.predict([transformed_appartments[8]]))
+my_KRegressors = [('k_neighbors_1', KNeighborsRegressor(n_neighbors=1, metric=customDistance)),
+                  ('k_neighbors_2', KNeighborsRegressor(n_neighbors=2, metric=customDistance)),
+                  ('k_neighbors_1_Weighted', KNeighborsRegressor(n_neighbors=1, metric=customDistanceWeights)),
+                  ('k_neighbors_2_Weighted', KNeighborsRegressor(n_neighbors=2, metric=customDistanceWeights))]
+
+errors = [0, 0, 0, 0]
+for name, regressor in my_KRegressors:
+    for i in range(num_apartments):
+        print("performing regresion for "+ name + " as test case leaving out apartment " + str(i))
+        regressor.fit(transformed_appartments[:i]+transformed_appartments[i+1:], rent[:i]+rent[i+1:])
+        predict = regressor.predict([transformed_appartments[i]])
+        error = np.fabs(predict - rent[i])
+        error_percent = (error/rent[i])*100
+        print(name + " predicts: " + str(predict) + " actual: "+ str(rent[i]) + " error: " + str(error) + " error%: "+ str(error_percent))
