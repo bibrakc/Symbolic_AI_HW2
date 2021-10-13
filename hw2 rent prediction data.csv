@@ -1,0 +1,21 @@
+Case Number,District,Address,Type,Source,Rent
+1,Mh,Lx,11,indi,500
+2,Mh,Lz,21,indi,2500
+3,Mh,Ls1,21,indi,1500
+4,Mh,Xz,11,indi,500
+5,Mh,Hm3,11,indi,880
+6,Mh,Ls2,31,dn*,1500
+7,Mh,Dw,22,dn*,2500
+8,Xh,Cd,11,indi,1200
+9,Xh,Yd,32,indi,6800
+10,Xh,Xm,20,indi,1600
+11,Cn,Xh,11,indi,1100
+12,Cn,Fy,11,indi,1100
+13,Cn,Lj,21,dn*,3500
+14,Pd,Wl,21,indi,1600
+15,Pd,Wl,21,indi,1600
+16,Pd,Yg,10,indi,3500
+17,Pd,Ls,11,bc*,1000
+18,Yp,Xy,10,indi,750
+19,Yp,Bx,32,indi,2000
+20,Yp,Cy,42,ys*,10000

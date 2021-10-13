@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Test scripts and scratchpads
+main.py
+
 # C extensions
 *.so
 
