@@ -45,16 +45,20 @@ for distric, address, source in apartments:
     all_address += [address]
 
 from sklearn import preprocessing
-le = preprocessing.LabelEncoder()
-le.fit(all_distric)
-numeric_district = le.transform(all_distric)
+le_district = preprocessing.LabelEncoder()
+le_district.fit(all_distric)
+numeric_district = le_district.transform(all_distric)
+#print(le_district.classes_)
+#print(le_district.transform(le_district.classes_))
 
-le.fit(all_address)
-numeric_address = le.transform(all_address)
 
+le_address = preprocessing.LabelEncoder()
+le_address.fit(all_address)
+numeric_address = le_address.transform(all_address)
 
-le.fit(all_source)
-numeric_source = le.transform(all_source)
+le_source = preprocessing.LabelEncoder()
+le_source.fit(all_source)
+numeric_source = le_source.transform(all_source)
 
 #print(numeric_district)
 #print(numeric_address)
@@ -96,7 +100,7 @@ def customDistance(A, B):
 
 
 def customDistanceWeights(A, B):
-    w = [0.9, 0.1, 0.4, 2, 0.7]
+    w = [0.2, 0.05, 0.2, 2, 0.7]
     distric = 0
     address = 0
     source = 0
@@ -118,13 +122,14 @@ from sklearn.neighbors import KNeighborsRegressor
 #neigh = KNeighborsRegressor(n_neighbors=2, metric=customDistanceWeights)
 #neigh.fit(transformed_appartments[:8]+transformed_appartments[9:], rent[:8]+rent[9:])
 
-
+print("\n\nK Regression Part")
 my_KRegressors = [('k_neighbors_1', KNeighborsRegressor(n_neighbors=1, metric=customDistance)),
                   ('k_neighbors_2', KNeighborsRegressor(n_neighbors=2, metric=customDistance)),
                   ('k_neighbors_1_Weighted', KNeighborsRegressor(n_neighbors=1, metric=customDistanceWeights)),
                   ('k_neighbors_2_Weighted', KNeighborsRegressor(n_neighbors=2, metric=customDistanceWeights))]
 
 error_average = {'k_neighbors_1': 0, 'k_neighbors_2': 0, 'k_neighbors_1_Weighted': 0, 'k_neighbors_2_Weighted': 0}
+
 for name, regressor in my_KRegressors:
     for i in range(num_apartments):
         #print("performing regresion for "+ name + " as test case leaving out apartment " + str(i))
@@ -133,9 +138,98 @@ for name, regressor in my_KRegressors:
         error = np.fabs(predict - rent[i])
         error_percent = (error/rent[i])*100
         error_average[name] += error_percent
+        #print("predicted rent = " + str(predict) + ", Test rent ", rent[i])
         #print(name + " predicts: " + str(predict) + " actual: "+ str(rent[i]) + " error: " + str(error) + " error%: "+ str(error_percent))
     error_average[name] = error_average[name]/(num_apartments-1)
     #print("Average Error for "+ name + ": " + str(error_average[name]))
 
+print("Average Error for K Regressor: ")
 print(error_average)
+#print("Average Error for "+ name + ": " + str(error_average[name]))
+
+print("\n\nK Neighbor Part and Case Base Adaption")
+error_average = {'k_neighbors_1': 0, 'k_neighbors_2': 0, 'k_neighbors_1_Weighted': 0, 'k_neighbors_2_Weighted': 0}
+error_max = {'k_neighbors_1': 0, 'k_neighbors_2': 0, 'k_neighbors_1_Weighted': 0, 'k_neighbors_2_Weighted': 0}
+error_max_problem = {'k_neighbors_1': 0, 'k_neighbors_2': 0, 'k_neighbors_1_Weighted': 0, 'k_neighbors_2_Weighted': 0}
+error_max_sol = {'k_neighbors_1': 0, 'k_neighbors_2': 0, 'k_neighbors_1_Weighted': 0, 'k_neighbors_2_Weighted': 0}
+
+
+
+for name, regressor in my_KRegressors:
+    for i in range(num_apartments):
+        #print("\n\ni = ", i)
+        leave_out_apartments = transformed_appartments[:i]+transformed_appartments[i+1:]
+        #print(leave_out_apartments)
+        leave_out_rent = rent[:i]+rent[i+1:]
+        #print(leave_out_rent)
+        regressor.fit(leave_out_apartments, leave_out_rent)
+        num_k = 1
+        if(name == "k_neighbors_2" or name == "k_neighbors_2_Weighted"):
+            num_k = 2
+        predict = regressor.kneighbors([transformed_appartments[i]], num_k, True)
+        #print("For problem case: " , [transformed_appartments[i]] , "Predict: ", predict)
+        predicted_case_1 = leave_out_apartments[predict[1][0][0]]
+        predicted_rent_1 = leave_out_rent[predict[1][0][0]]
+
+
+
+        if (name == "k_neighbors_2" or name == "k_neighbors_2_Weighted"):
+            predicted_case_2 = leave_out_apartments[predict[1][0][1]]
+            predicted_rent_2 = leave_out_rent[predict[1][0][1]]
+            #predicted_rent += predicted_rent_2
+            #pre
+
+
+        #print("test case = ", [transformed_appartments[i]])
+        #print("predicred case = ", predicted_case)
+        #print("predicted rent = " + str(predicted_rent) + ", Test rent " , rent[i])
+
+        test_district_encoded = transformed_appartments[i][0]
+        #Yp_district_encoded = le_district.transform(["Yp"])
+        #Rule 1
+        if (test_district_encoded == le_district.transform(["Yp"]) and predicted_case_1[0] == le_district.transform(["Pd"])):
+            print("They Match")
+            predicted_rent_1 *=1.2
+
+        if (name == "k_neighbors_2" or name == "k_neighbors_2_Weighted"):
+            if (test_district_encoded == le_district.transform(["Yp"]) and predicted_case_2[0] == le_district.transform(["Pd"])):
+                #print("They Match, Test = ")
+                predicted_rent_2 *=1.2
+
+        '''
+        #Rule 2
+        if (test_district_encoded == le_district.transform(["Yp"]) and predicted_case_1[0] == le_district.transform(["Pd"])):
+            print("They Match")
+            predicted_rent_1 *=1.2
+
+        if (name == "k_neighbors_2" or name == "k_neighbors_2_Weighted"):
+            if (test_district_encoded == le_district.transform(["Yp"]) and predicted_case_2[0] == le_district.transform(["Pd"])):
+                #print("They Match, Test = ")
+                predicted_rent_2 *=1.2
+        '''
+
+
+        predicted_rent = predicted_rent_1
+        if (name == "k_neighbors_2" or name == "k_neighbors_2_Weighted"):
+            predicted_rent += predicted_rent_2
+            predicted_rent /= 2
+
+
+        error = np.fabs(predicted_rent - rent[i])
+        error_percent = (error/rent[i])*100
+        error_average[name] += error_percent
+        if(error_percent > error_max[name]):
+            error_max[name] = error_percent
+            error_max_problem[name] = [transformed_appartments[i]]
+            error_max_sol[name] = [predicted_case_1]
+
+    error_average[name] = error_average[name] / (num_apartments - 1)
+
+
+
+print("Average Error for K Regressor Case Base: ")
+print(error_average)
+print(error_max)
+print(error_max_problem)
+print(error_max_sol)
 #print("Average Error for "+ name + ": " + str(error_average[name]))
